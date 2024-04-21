@@ -5,3 +5,4 @@ pydeck
 streamlit
 google-generativeai
 pdf2image
+beautifulsoup4
