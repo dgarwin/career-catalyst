@@ -8,8 +8,8 @@ st.title("Job Scraper")
 with st.sidebar:
     jobs_to_search_var = st.text_input("Jobs to Search for", key="jobs_to_search_key")
 
-API_KEY = 'AIzaSyBdFa3E5ebBU6QGnTGMUCkArl4MZ-YDeLk'
-SEARCH_ENGINE_ID = '65f3c38a822be4b44'
+API_KEY = '{API_KEY}'
+SEARCH_ENGINE_ID = '{ENGINE_KEY}'
 
 def google_search(query):
   query=f"site:jobs.lever.co {query}"
