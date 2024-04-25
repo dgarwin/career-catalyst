@@ -1,14 +1,15 @@
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
+from google.cloud import storage
 
 st.title("Job Scraper")
 
 with st.sidebar:
-    jobs_to_search_var = st.text_input("Jobs to Serach for", key="jobs_to_search_key")
+    jobs_to_search_var = st.text_input("Jobs to Search for", key="jobs_to_search_key")
 
-API_KEY = {search_api_key}
-SEARCH_ENGINE_ID = {search_engine_id}
+API_KEY = 'AIzaSyBdFa3E5ebBU6QGnTGMUCkArl4MZ-YDeLk'
+SEARCH_ENGINE_ID = '65f3c38a822be4b44'
 
 def google_search(query):
   query=f"site:jobs.lever.co {query}"
@@ -29,6 +30,50 @@ def display_search_results(results):
     link = item.get('link')
     st.write(f"### {title}\n{snippet}\n[Read more]({link})")
 
+import json
+from google.cloud import storage
+
+def push_to_bucket(bucket_name, destination_blob_name, job_header_string, job_description_string):
+  # Create a storage client using default credentials
+  client = storage.Client()
+  
+  # Get the bucket
+  bucket = client.bucket(bucket_name)
+  
+  # Create a blob in the bucket at the specified path
+  blob = bucket.blob(destination_blob_name)
+
+  # Try to download the existing content, if any
+  try:
+    existing_data_json = blob.download_as_text()
+    existing_data = json.loads(existing_data_json)
+  except Exception as e:
+    print(f"No existing data or unable to download: {str(e)}")
+    existing_data = []
+
+  # Prepare the new data to append
+  new_data = {
+    "job_header": job_header_string,
+    "job_description": job_description_string
+  }
+
+  # Append new data to the existing data
+  if isinstance(existing_data, list):
+    existing_data.append(new_data)
+  else:
+    existing_data = [existing_data, new_data]  # In case existing data isn't a list
+  
+  # Convert the combined data back to JSON
+  final_json_data = json.dumps(existing_data)
+  
+  # Upload the combined JSON data
+  blob.upload_from_string(final_json_data, content_type='application/json')
+  
+  # Optional: print statement to confirm upload
+  print(f"File uploaded to {destination_blob_name}")
+
+   
+
 def scrape_jobs(results):
     for item in results.get('items', []):
         link = item.get('link')
@@ -39,6 +84,9 @@ def scrape_jobs(results):
             job_description=soup.find_all(attrs={'data-qa': 'job-description'})
             if job_header:
                 st.write(f"### {job_header[0].text}\n{job_description[0].text}\n[Read more]({link})")
+                push_to_bucket("job_scraper","job_scrapper_data.json",job_header[0].text,job_description[0].text)
+
+
 
 
 
