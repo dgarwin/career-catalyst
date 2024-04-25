@@ -7,3 +7,5 @@ google-generativeai
 pdf2image
 beautifulsoup4
 PyPDF2
+google.cloud
+google-cloud-storage
