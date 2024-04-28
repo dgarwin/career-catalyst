@@ -7,9 +7,11 @@ st.title("Job Scraper")
 
 with st.sidebar:
     jobs_to_search_var = st.text_input("Jobs to Search for", key="jobs_to_search_key")
+    custom_search_api_key=st.text_input("Custom search API Key", key="custom_search_api_key")
+    search_engine_id=st.text_input("Custom search API Key", key="search_engine_id")
 
-API_KEY = '{API_KEY}'
-SEARCH_ENGINE_ID = '{ENGINE_KEY}'
+API_KEY = custom_search_api_key
+SEARCH_ENGINE_ID = search_engine_id
 
 def google_search(query):
   query=f"site:jobs.lever.co {query}"
@@ -33,7 +35,7 @@ def display_search_results(results):
 import json
 from google.cloud import storage
 
-def push_to_bucket(bucket_name, destination_blob_name, job_header_string, job_description_string):
+def push_to_bucket(bucket_name, destination_blob_name, job_header_string, job_description_string,job_link):
   # Create a storage client using default credentials
   client = storage.Client()
   
@@ -54,7 +56,8 @@ def push_to_bucket(bucket_name, destination_blob_name, job_header_string, job_de
   # Prepare the new data to append
   new_data = {
     "job_header": job_header_string,
-    "job_description": job_description_string
+    "job_description": job_description_string,
+    "job_link":job_link
   }
 
   # Append new data to the existing data
@@ -84,7 +87,7 @@ def scrape_jobs(results):
             job_description=soup.find_all(attrs={'data-qa': 'job-description'})
             if job_header:
                 st.write(f"### {job_header[0].text}\n{job_description[0].text}\n[Read more]({link})")
-                push_to_bucket("job_scraper","job_scrapper_data.json",job_header[0].text,job_description[0].text)
+                push_to_bucket("job_scraper","job_scrapper_data.json",job_header[0].text,job_description[0].text,link)
 
 
 
