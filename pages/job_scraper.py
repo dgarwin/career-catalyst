@@ -87,7 +87,7 @@ def scrape_jobs(results):
             job_description=soup.find_all(attrs={'data-qa': 'job-description'})
             if job_header:
                 st.write(f"### {job_header[0].text}\n{job_description[0].text}\n[Read more]({link})")
-                push_to_bucket("job_scraper","job_scrapper_data.json",job_header[0].text,job_description[0].text,link)
+                push_to_bucket("job_scraper","heatlhcare_scrapper_data.json",job_header[0].text,job_description[0].text,link)
 
 
 
