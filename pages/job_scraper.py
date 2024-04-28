@@ -8,7 +8,7 @@ st.title("Job Scraper")
 with st.sidebar:
     jobs_to_search_var = st.text_input("Jobs to Search for", key="jobs_to_search_key")
     custom_search_api_key=st.text_input("Custom search API Key", key="custom_search_api_key")
-    search_engine_id=st.text_input("Custom search API Key", key="search_engine_id")
+    search_engine_id=st.text_input("Search Engine ID", key="search_engine_id")
 
 API_KEY = custom_search_api_key
 SEARCH_ENGINE_ID = search_engine_id
