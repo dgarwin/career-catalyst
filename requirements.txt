@@ -9,3 +9,4 @@ beautifulsoup4
 PyPDF2
 google.cloud
 google-cloud-storage
+tabulate
