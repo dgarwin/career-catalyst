@@ -15,15 +15,36 @@ def extract_text_from_pdf():
     pdf_reader = PyPDF2.PdfReader(uploaded_file)
     return ''.join(page.extract_text() for page in pdf_reader.pages if page.extract_text())
 
-start_message = "Welcome to Career Catalyst! Before we continue, we'd like to know a bit about you. Would you please describe your current career goals?"
+start_message = """Welcome to Career Catalyst! We are here to support you in discovering the career that has you fulfilled. If you could have anything in your career, what would it be?
+
+Before we begin, please also enter your resume on the left tool bar."""
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = [
             {"role": "model", "parts": [start_message]}
         ]
+questions = [
+    "where do you want to be in 10 years?",
+    'what does your life styel look like and how does your career support this?',
+    'what are your monetary goals?',
+    'what industry do you want to be in?'
+]
 
-for msg in st.session_state.messages:
-    st.chat_message(msg["role"]).write(msg["parts"][0])
+base_prompt = '''
+             You are a career coach. You are here to support the user in discovering a career that has them fulfilled. 
+             You are biased towards not offering advice, and tend to ask open-ended questions to get the candidate to examine what they want.  
+             You have the candidate's prior experience from a resume below.
+
+             Ask the user an open-ended question on what they want out of their career. Avoid directly referencing the information in their resume.
+             Start with open-ended questions and progress to more specific questions. 
+
+             chat history: {chat_history}
+             resume: {resume}
+             question:
+             '''
+
+genai.configure(api_key=openai_api_key)
+model = genai.GenerativeModel('gemini-pro')
 
 if prompt := st.chat_input():
     if not openai_api_key:
@@ -32,25 +53,30 @@ if prompt := st.chat_input():
     if not uploaded_file:
         st.info("Please add your resume to continue.")
         st.stop()
-    if len(st.session_state.messages) == 1:
-        st.session_state.messages.insert(0, {"role": "user", "parts": [f'''
-             System Prompt: You are Career Catalyst, a master career coach. 
-             Your current goal is to extract information from the person you're chatting with about their experience. 
-             Ignore anything else they're talking about. Bring the conversation back to talking about their experience.
-             Continue to ask deeper probing questions, extracting hard facts as much as possible.
-             Here is the user's resume for additional context {extract_text_from_pdf()}
-             ''']})
     st.chat_message("user").write(prompt)
-    genai.configure(api_key=openai_api_key)
+    
 
-    model = genai.GenerativeModel('gemini-pro')
+
+    
+    if "coach" not in st.session_state:
+        st.session_state["coach"] = "career catalyst"
+
     st.session_state.messages.append({
         "role":"user",
         "parts":[prompt]
     })
-    response = model.generate_content(st.session_state.messages).text
+    response = model.generate_content(
+        base_prompt.format(
+            chat_history = st.session_state.messages, 
+            resume = extract_text_from_pdf())
+            ).text
     st.session_state.messages.append({
-        "role":"model",
+        "role":"coach",
         "parts":[response]
     })
-    st.chat_message("model").write(response)
+
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["parts"])
+
+    
