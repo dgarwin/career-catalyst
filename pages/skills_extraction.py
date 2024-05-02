@@ -18,11 +18,14 @@ def extract_text_from_pdf():
 start_message = """Welcome to Career Catalyst! We are here to support you in discovering the career that has you fulfilled. If you could have anything in your career, what would it be?
 
 Before we begin, please also enter your resume on the left tool bar."""
-
+st.chat_message('coach').write(start_message)
 if "messages" not in st.session_state:
-    st.session_state["messages"] = [
-            {"role": "model", "content": start_message}
-        ]
+    st.session_state["messages"] = []
+
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.write(message["content"])
+
 questions = [
     "where do you want to be in 10 years?",
     'what does your life styel look like and how does your career support this?',
@@ -79,8 +82,4 @@ if prompt := st.chat_input():
         "content":response
     })
 
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message['content'])
-
-    
+   
