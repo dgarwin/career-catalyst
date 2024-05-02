@@ -22,16 +22,18 @@ st.chat_message('coach').write(start_message)
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
 
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.write(message["content"])
 
-questions = [
+
+profile = [
     "where do you want to be in 10 years?",
+    "Where will you be in your career in 5 years?",
+    "Where will you be in your career in 2 years?",
     'what does your life styel look like and how does your career support this?',
     'what are your monetary goals?',
     'what industry do you want to be in?'
 ]
+
+answered_questions = []
 
 base_prompt = '''
              You are a career coach. You are here to support the user in discovering a career that has them fulfilled. 
@@ -40,12 +42,27 @@ base_prompt = '''
 
              Ask the user an open-ended question on what they want out of their career. Avoid directly referencing the information in their resume.
              Start with open-ended questions and progress to more specific questions. 
+            
+             At the end of 10 questions have the answers to the answers to the items in the profile. Avoid asking them the questions directly
+             and gently nudge them in that direction.
 
+             Instead of asking "how would you define," ask "say more about that." 
+
+             When starting answers, paraphrase what the clients has said to you in their previous response. 
+
+             Avoid asking redundant questions and when you have enough information to cover the questions in the profile, state "your profile is complete,
+             move to the job search section."
              chat history: {chat_history}
              resume: {resume}
-             question:
+             profile items: {profile}
+             question or profile complete:
              '''
+answered_questions_prompt = """
+Out of the following questions {questions}, how many have been answered in the chat
 
+chat history: {chat_history}
+questions answered (an integer):
+"""
 genai.configure(api_key=openai_api_key)
 model = genai.GenerativeModel('gemini-pro')
 
@@ -61,12 +78,7 @@ if prompt := st.chat_input():
         st.info("Please add your resume to continue.")
         st.stop()
     
-    st.chat_message("user").write(prompt)
-    
 
-
-    
-    
 
     st.session_state.messages.append({
         "role":"user",
@@ -75,11 +87,24 @@ if prompt := st.chat_input():
     response = model.generate_content(
         base_prompt.format(
             chat_history = st.session_state.messages, 
-            resume = extract_text_from_pdf())
-            ).text
+            resume = extract_text_from_pdf(),
+            profile = profile
+            )).text
     st.session_state.messages.append({
         "role":"coach",
         "content":response
     })
 
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.write(message["content"])
    
+questions_answered_check = model.generate_content(
+    answered_questions_prompt.format(
+        questions = profile,
+        chat_history = st.session_state.messages
+    )
+).text
+
+if int(questions_answered_check)==len(profile):
+    st.chat_message('coach').write("your profile is complete, move to the job search section.")
