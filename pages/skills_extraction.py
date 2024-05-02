@@ -21,7 +21,7 @@ Before we begin, please also enter your resume on the left tool bar."""
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = [
-            {"role": "model", "parts": [start_message]}
+            {"role": "model", "content": start_message}
         ]
 questions = [
     "where do you want to be in 10 years?",
@@ -46,6 +46,10 @@ base_prompt = '''
 genai.configure(api_key=openai_api_key)
 model = genai.GenerativeModel('gemini-pro')
 
+if "coach" not in st.session_state:
+        st.session_state["coach"] = "career catalyst"
+        st.chat_message('coach').write(start_message)
+
 if prompt := st.chat_input():
     if not openai_api_key:
         st.info("Please add your Gemini API key to continue.")
@@ -53,17 +57,17 @@ if prompt := st.chat_input():
     if not uploaded_file:
         st.info("Please add your resume to continue.")
         st.stop()
+    
     st.chat_message("user").write(prompt)
     
 
 
     
-    if "coach" not in st.session_state:
-        st.session_state["coach"] = "career catalyst"
+    
 
     st.session_state.messages.append({
         "role":"user",
-        "parts":[prompt]
+        "content":prompt
     })
     response = model.generate_content(
         base_prompt.format(
@@ -72,11 +76,11 @@ if prompt := st.chat_input():
             ).text
     st.session_state.messages.append({
         "role":"coach",
-        "parts":[response]
+        "content":response
     })
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
-            st.markdown(message["parts"])
+            st.markdown(message['content'])
 
     
