@@ -7,8 +7,8 @@ import PyPDF2
 with st.sidebar:
     openai_api_key = st.text_input("Gemini API Key", key="chatbot_api_key", type="password")
     uploaded_file = st.file_uploader("Resume", type=None, accept_multiple_files=False, key=None, help=None, on_change=None, disabled=False, label_visibility="visible")
-
-st.title("💬 Skills Extraction Chatbot")
+    finalize_profile = st.button('Finalize profile')
+st.title("💬 Career Goal Chatbot")
 
 def extract_text_from_pdf():
     """Extracts text from each page of the given PDF and returns the complete text."""
@@ -37,6 +37,9 @@ answered_questions = []
 
 base_prompt = '''
              You are a career coach. You are here to support the user in discovering a career that has them fulfilled. 
+
+             When starting answers, paraphrase what the clients has said to you in their previous response. 
+
              You are biased towards not offering advice, and tend to ask open-ended questions to get the candidate to examine what they want.  
              You have the candidate's prior experience from a resume below.
 
@@ -48,8 +51,6 @@ base_prompt = '''
 
              Instead of asking "how would you define," ask "say more about that." 
 
-             When starting answers, paraphrase what the clients has said to you in their previous response. 
-
              Avoid asking redundant questions and when you have enough information to cover the questions in the profile, state "your profile is complete,
              move to the job search section."
              chat history: {chat_history}
@@ -58,10 +59,10 @@ base_prompt = '''
              question or profile complete:
              '''
 answered_questions_prompt = """
-Out of the following questions {questions}, how many have been answered in the chat
+Out of the following questions {questions}, have all the question been answered?
 
 chat history: {chat_history}
-questions answered (an integer):
+all questions answered (boolean):
 """
 genai.configure(api_key=openai_api_key)
 model = genai.GenerativeModel('gemini-pro')
@@ -106,5 +107,13 @@ questions_answered_check = model.generate_content(
     )
 ).text
 
-if int(questions_answered_check)==len(profile):
-    st.chat_message('coach').write("your profile is complete, move to the job search section.")
+
+def write_profile():
+    st.write("Finalizing profile...")
+
+    with open('profile.txt','w') as f:
+        f.write('\n'.join(list(st.session_state.messages.items())))
+
+
+if finalize_profile:
+    write_profile()  # Call the function if the button is clicked
